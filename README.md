@@ -1,4 +1,4 @@
-**## renren-fast-vue**
+**## shop-vue**
 
 - shop-vue基于vue、element-ui构建开发，实现[shop](https://github.com/mans8/shop)后台管理前端功能
 
