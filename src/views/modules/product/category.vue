@@ -6,6 +6,7 @@
       :expand-on-click-node="false"
       show-checkbox="true"
       node-key="catId"
+      :default-expanded-keys="expandedKey"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -37,6 +38,7 @@ export default {
   data() {
     return {
       menus: [],
+      expandedKey: [],
       defaultProps: {
         children: "children",
         label: "name",
@@ -58,7 +60,37 @@ export default {
     },
     append(data) {},
 
-    remove(node, data) {},
+    remove(node, data) {
+      var ids = [data.catId];
+
+      this.$confirm(`是否删除【${data.name}】菜单？`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.$http({
+            url: this.$http.adornUrl("/product/category/delete"),
+            method: "post",
+            data: this.$http.adornData(ids, false),
+          }).then(({ data }) => {
+            this.$message({
+              message: "菜单删除成功",
+              type: "success"
+            });
+            //刷新出新菜单
+            this.getMenus();
+            //设置需要默认展开的菜单
+            this.expandedKey = [node.parent.data.catId]
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
+    },
   },
   //计算属性，类似于data概念
   computed: {},
