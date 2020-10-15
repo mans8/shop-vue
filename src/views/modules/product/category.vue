@@ -16,18 +16,30 @@
             type="text"
             size="mini"
             @click="() => append(data)"
-            >Append</el-button
+            >新增</el-button
           >
           <el-button
             v-if="node.childNodes.length == 0"
             type="text"
             size="mini"
             @click="() => remove(node, data)"
-            >Delete</el-button
+            >删除</el-button
           >
         </span>
       </span>
     </el-tree>
+
+    <el-dialog title="提示" :visible.sync="dialogVisible" width="30%">
+      <el-form :model="category">
+        <el-form-item label="分类名称">
+          <el-input v-model="category.name" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addCategory">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -39,9 +51,17 @@ export default {
     return {
       menus: [],
       expandedKey: [],
+      dialogVisible: false,
       defaultProps: {
         children: "children",
         label: "name",
+      },
+      category: {
+        name: "",
+        parentCid: 0,
+        catLevel: 0,
+        showStatus: 1,
+        sort: 0,
       },
     };
   },
@@ -58,7 +78,31 @@ export default {
         this.menus = data.data;
       });
     },
-    append(data) {},
+    append(data) {
+      this.dialogVisible = true;
+      this.category.parentCid = data.catId;
+      this.category.catLevel = data.catLevel * 1 + 1;
+    },
+
+    //添加分类
+    addCategory() {
+      this.$http({
+        url: this.$http.adornUrl("/product/category/save"),
+        method: "post",
+        data: this.$http.adornData(this.category, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "菜单保存成功",
+          type: "success",
+        });
+        //关闭对话框
+        this.dialogVisible = false;
+        //刷新出新菜单
+        this.getMenus();
+        //设置需要默认展开的菜单
+        this.expandedKey = [this.category.parentCid];
+      });
+    },
 
     remove(node, data) {
       var ids = [data.catId];
@@ -76,12 +120,12 @@ export default {
           }).then(({ data }) => {
             this.$message({
               message: "菜单删除成功",
-              type: "success"
+              type: "success",
             });
             //刷新出新菜单
             this.getMenus();
             //设置需要默认展开的菜单
-            this.expandedKey = [node.parent.data.catId]
+            this.expandedKey = [node.parent.data.catId];
           });
         })
         .catch(() => {
