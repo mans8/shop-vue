@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-button type="danger" @click="batchDelete">批量删除</el-button>
     <el-tree
       :data="menus"
       :props="defaultProps"
@@ -10,6 +11,7 @@
       draggable
       :allow-drog="allowDrop"
       @node-drop="handleDrop"
+      ref="menuTree"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -176,7 +178,7 @@ export default {
       }).then(({ data }) => {
         this.$message({
           message: "菜单顺序修改成功",
-          type: "success"
+          type: "success",
         });
         //刷出新菜单
         this.getMenus();
@@ -228,6 +230,31 @@ export default {
         this.category.productUnit = data.data.productUnit;
         this.category.parentCid = data.data.parentCid;
       });
+    },
+    //批量删除
+    batchDelete() {
+      let catIds = [];
+      let checkedNodes = this.$refs.menuTree.getCheckedNodes();
+      checkedNodes.forEach((element) => catIds.push(element.catId));
+      this.$confirm(`是否批量删除【${catIds}】菜单？`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.$http({
+            url: this.$http.adornUrl("/product/category/delete"),
+            method: "post",
+            data: this.$http.adornData(catIds, false),
+          }).then(({ data }) => {
+            this.$message({
+              message: "菜单删除成功",
+              type: "success",
+            });
+            this.getMenus();
+          });
+        })
+        .catch(() => {});
     },
 
     //添加分类
